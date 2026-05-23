@@ -236,6 +236,11 @@ button {
   flex: 1;
 }
 
+.save-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
 /* ---------------- Round settings (collapsible) ---------------- */
 .collapsible {
   background: var(--surface);
