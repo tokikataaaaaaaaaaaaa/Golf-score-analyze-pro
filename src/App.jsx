@@ -9,6 +9,7 @@ import {
 import HoleEditor from "./components/HoleEditor.jsx";
 import Scorecard from "./components/Scorecard.jsx";
 import AnalysisReport from "./components/AnalysisReport.jsx";
+import { Collapsible, Field } from "./components/ui.jsx";
 
 const STORE_KEY = "fairway_round_v1";
 const today = () => new Date().toISOString().slice(0, 10);
@@ -32,13 +33,14 @@ function loadInitial() {
   };
 }
 
-const Flag = () => (
-  <svg className="flag" viewBox="0 0 40 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M9 4v36" stroke="#f4eede" strokeWidth="2.4" strokeLinecap="round" />
-    <path d="M9 5l22 5.5L9 16V5z" fill="#e8553d" />
-    <ellipse cx="9" cy="41" rx="7" ry="2.4" fill="rgba(122,178,150,0.5)" />
-  </svg>
-);
+const TABS = [
+  { id: "input", label: "入力" },
+  { id: "card", label: "スコアカード" },
+  { id: "analysis", label: "分析" },
+];
+
+const dotColor = (d) =>
+  d < 0 ? "var(--red)" : d === 0 ? "var(--green)" : d === 1 ? "var(--amber)" : "var(--blue)";
 
 export default function App() {
   const init = loadInitial();
@@ -48,7 +50,7 @@ export default function App() {
   const [pars, setPars] = useState(init.pars);
   const [holes, setHoles] = useState(init.holes);
   const [sel, setSel] = useState(0);
-  const [editPars, setEditPars] = useState(false);
+  const [tab, setTab] = useState("input");
 
   useEffect(() => {
     try {
@@ -61,11 +63,13 @@ export default function App() {
     }
   }, [courseName, player, date, pars, holes]);
 
-  const result = useMemo(() => analyze({ courseName, parValues: pars }, holes), [
-    courseName,
-    pars,
-    holes,
-  ]);
+  const result = useMemo(
+    () => analyze({ courseName, parValues: pars }, holes),
+    [courseName, pars, holes]
+  );
+
+  const coursePar = pars.reduce((a, b) => a + b, 0);
+  const toPar = result.totalScore - coursePar;
 
   const updateHole = (i, next) =>
     setHoles((hs) => hs.map((h, idx) => (idx === i ? next : h)));
@@ -94,155 +98,147 @@ export default function App() {
     setSel(0);
   };
 
-  const toParColor = (i) => {
-    const d = (Number(holes[i].stroke) || 0) - pars[i];
-    if (d < 0) return "#cf3a2e";
-    if (d === 0) return "#2c7a52";
-    if (d === 1) return "#3f7fb0";
-    return "#16233a";
-  };
-
   return (
     <div className="app">
-      <header className="masthead">
-        <div className="brand">
-          <Flag />
-          <div>
-            <h1 className="wordmark">
-              FAIR<em>WAY</em>
-            </h1>
-            <p className="tagline">Golf Score Analyzer</p>
+      <header className="appbar">
+        <div className="appbar-top">
+          <div className="brand2">
+            <span className="brand-mark">⛳</span>
+            <span className="brand-name">スコア分析</span>
+          </div>
+          <div className="appbar-score">
+            <b>{result.totalScore}</b>
+            <span className={`topar ${toPar < 0 ? "under" : toPar > 0 ? "over" : "even"}`}>
+              {toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : toPar}
+            </span>
           </div>
         </div>
-        <div className="meta">
-          スコア入力 → 自動分析・可視化
-          <br />
-          データは端末内のみで処理 / サーバー送信なし
-        </div>
+        <nav className="tabs" role="tablist">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={tab === t.id}
+              className={`tab${tab === t.id ? " on" : ""}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
       </header>
 
-      {/* セットアップ */}
-      <section className="section">
-        <div className="section-head">
-          <span className="section-num">01</span>
-          <h2 className="section-title">ラウンド設定</h2>
-        </div>
-        <div className="paper">
-          <div className="setup">
-            <div className="field">
-              <label>コース名</label>
-              <input value={courseName} onChange={(e) => setCourseName(e.target.value)} placeholder="コース名" />
-            </div>
-            <div className="field">
-              <label>プレーヤー</label>
-              <input value={player} onChange={(e) => setPlayer(e.target.value)} placeholder="名前" />
-            </div>
-            <div className="field">
-              <label>プレー日</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            </div>
-            <div className="setup-actions">
-              <button className="btn btn-ghost" onClick={() => setEditPars((v) => !v)}>
-                {editPars ? "パー設定を閉じる" : "パー設定"}
-              </button>
-              <button className="btn btn-ghost" onClick={loadSample}>
+      <main className="view">
+        {tab === "input" && (
+          <>
+            <Collapsible title="ラウンド設定">
+              <Field label="コース名">
+                <input
+                  className="input"
+                  value={courseName}
+                  onChange={(e) => setCourseName(e.target.value)}
+                  placeholder="コース名"
+                />
+              </Field>
+              <Field label="プレーヤー">
+                <input
+                  className="input"
+                  value={player}
+                  onChange={(e) => setPlayer(e.target.value)}
+                  placeholder="名前"
+                />
+              </Field>
+              <Field label="プレー日">
+                <input
+                  className="input"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </Field>
+              <div className="field2">
+                <span className="field2-label">
+                  各ホールのパー（合計 {coursePar}）
+                </span>
+                <div className="par-grid">
+                  {pars.map((p, i) => (
+                    <div className="par-cell" key={i}>
+                      <span>H{i + 1}</span>
+                      <input
+                        type="number"
+                        min={3}
+                        max={6}
+                        value={p}
+                        onChange={(e) => setPar(i, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Collapsible>
+
+            <div className="quickbar">
+              <button className="btn ghost" onClick={loadSample}>
                 サンプル読込
               </button>
-              <button className="btn btn-dark" onClick={resetRound}>
+              <button className="btn ghost danger" onClick={resetRound}>
                 リセット
               </button>
             </div>
-          </div>
 
-          {editPars && (
-            <div style={{ marginTop: 16 }}>
-              <p className="muted-note" style={{ marginBottom: 10 }}>
-                各ホールのパーを設定 (3〜6)。合計パー: {pars.reduce((a, b) => a + b, 0)}
-              </p>
-              <div className="hole-strip">
-                {pars.map((p, i) => (
-                  <div className="hole-chip" key={i} style={{ cursor: "default" }}>
-                    <div className="h-no">H{i + 1}</div>
-                    <input
-                      className="mini-input"
-                      style={{ width: "100%", textAlign: "center", padding: "4px" }}
-                      type="number"
-                      min={3}
-                      max={6}
-                      value={p}
-                      onChange={(e) => setPar(i, e.target.value)}
-                    />
-                  </div>
-                ))}
-              </div>
+            <div className="hole-strip2">
+              {holes.map((h, i) => (
+                <button
+                  key={i}
+                  className={`hpill${i === sel ? " on" : ""}`}
+                  onClick={() => setSel(i)}
+                >
+                  <span
+                    className="hp-dot"
+                    style={{ background: dotColor((Number(h.stroke) || 0) - pars[i]) }}
+                  />
+                  <span className="hp-no">H{i + 1}</span>
+                  <span className="hp-score">{h.stroke}</span>
+                  <span className="hp-par">par {pars[i]}</span>
+                </button>
+              ))}
             </div>
-          )}
-        </div>
-      </section>
 
-      {/* ホール入力 */}
-      <section className="section">
-        <div className="section-head">
-          <span className="section-num">02</span>
-          <h2 className="section-title">ホール入力</h2>
-          <p className="section-sub">ホールを選んで詳細を入力</p>
-        </div>
-        <div className="paper">
-          <div className="hole-strip">
-            {holes.map((h, i) => (
-              <div
-                key={i}
-                className={`hole-chip${i === sel ? " active" : ""}`}
-                onClick={() => setSel(i)}
+            <HoleEditor
+              index={sel}
+              par={pars[sel]}
+              hole={holes[sel]}
+              onChange={(next) => updateHole(sel, next)}
+            />
+
+            <div className="navrow">
+              <button
+                className="btn ghost"
+                disabled={sel === 0}
+                onClick={() => setSel((s) => Math.max(0, s - 1))}
               >
-                <span className="h-dot" style={{ background: toParColor(i) }} />
-                <div className="h-no">H{i + 1}</div>
-                <div className="h-score">{h.stroke}</div>
-                <div className="h-par">par {pars[i]}</div>
-              </div>
-            ))}
-          </div>
-          <HoleEditor
-            index={sel}
-            par={pars[sel]}
-            hole={holes[sel]}
-            onChange={(next) => updateHole(sel, next)}
-          />
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-            <button className="btn btn-ghost" disabled={sel === 0} onClick={() => setSel((s) => Math.max(0, s - 1))}>
-              ← 前のホール
-            </button>
-            <button className="btn btn-primary" disabled={sel === 17} onClick={() => setSel((s) => Math.min(17, s + 1))}>
-              次のホール →
-            </button>
-          </div>
-        </div>
-      </section>
+                ← 前
+              </button>
+              <span className="navrow-mid">{sel + 1} / 18</span>
+              <button
+                className="btn primary"
+                disabled={sel === 17}
+                onClick={() => setSel((s) => Math.min(17, s + 1))}
+              >
+                次 →
+              </button>
+            </div>
+          </>
+        )}
 
-      {/* スコアカード */}
-      <section className="section">
-        <div className="section-head">
-          <span className="section-num">03</span>
-          <h2 className="section-title">スコアカード</h2>
-        </div>
-        <Scorecard pars={pars} holes={holes} result={result} />
-      </section>
+        {tab === "card" && <Scorecard pars={pars} holes={holes} result={result} />}
 
-      {/* 分析 */}
-      <section className="section">
-        <div className="section-head">
-          <span className="section-num">04</span>
-          <h2 className="section-title">スコア分析</h2>
-          <p className="section-sub">入力に応じてリアルタイム計算</p>
-        </div>
-        <AnalysisReport pars={pars} holes={holes} r={result} />
-      </section>
+        {tab === "analysis" && <AnalysisReport pars={pars} holes={holes} r={result} />}
 
-      <p className="privacy">
-        本ツールは入力データを端末内 (localStorage) のみで処理し、外部サーバーには一切送信しません。
-        <br />
-        golfbu_kun のスコア分析機能を静的Webアプリとして再構築したものです。
-      </p>
+        <p className="privacy2">
+          データは端末内（localStorage）のみで処理され、サーバーには送信されません。
+        </p>
+      </main>
     </div>
   );
 }
