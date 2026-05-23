@@ -1,0 +1,22 @@
+{
+  "name": "golf-score-analyzer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ゴルフ1ラウンドのスコアを入力し、クライアントだけで詳細分析・可視化する静的Webアプリ",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.12.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}
