@@ -1,0 +1,683 @@
+/* ============================================================
+   FAIRWAY — ゴルフスコア分析
+   Aesthetic: refined clubhouse / editorial golf analytics.
+   Deep pine canvas + cream scorecard paper + pin-flag coral,
+   classic scorecard score conventions (red circle / dark square).
+   ============================================================ */
+
+:root {
+  --pine-900: #0a1f16;
+  --pine-800: #0e2a1f;
+  --pine-700: #143a2c;
+  --pine-600: #1c4d3a;
+  --pine-line: rgba(122, 178, 150, 0.22);
+
+  --cream: #f4eede;
+  --cream-2: #ece3cd;
+  --paper-line: #cdbf9c;
+  --ink: #1d271f;
+  --ink-soft: #4a5a4d;
+
+  --coral: #e8553d; /* pin flag */
+  --coral-deep: #c33f2b;
+  --gold: #d8a93a;
+  --sky: #3f7fb0;
+
+  --birdie: #cf3a2e; /* under par — red circle */
+  --par: #2c3a2e;
+  --bogey: #2f5d8a; /* over par — blue/square */
+  --double: #1d2b3f;
+
+  --fz-display: "Fraunces", Georgia, serif;
+  --fz-body: "Zen Kaku Gothic New", system-ui, sans-serif;
+  --fz-mono: "Spline Sans Mono", ui-monospace, monospace;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 18px 40px -24px rgba(0, 0, 0, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--fz-body);
+  color: var(--cream);
+  background-color: var(--pine-900);
+  /* topographic contour-line texture — golf green contours */
+  background-image: radial-gradient(
+      ellipse 120% 80% at 80% -10%,
+      rgba(40, 90, 66, 0.55),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 90% 60% at 0% 110%,
+      rgba(20, 58, 44, 0.6),
+      transparent 55%
+    ),
+    repeating-radial-gradient(
+      circle at 78% 22%,
+      transparent 0,
+      transparent 26px,
+      rgba(122, 178, 150, 0.05) 27px,
+      transparent 28px
+    );
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.app {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px 100px;
+}
+
+/* ---------------- Header ---------------- */
+.masthead {
+  padding: 46px 0 30px;
+  border-bottom: 1px solid var(--pine-line);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.brand .flag {
+  width: 40px;
+  height: 44px;
+  flex: none;
+}
+.wordmark {
+  font-family: var(--fz-display);
+  font-weight: 900;
+  font-size: clamp(38px, 6vw, 62px);
+  line-height: 0.86;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--cream);
+}
+.wordmark em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--coral);
+}
+.tagline {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(244, 238, 222, 0.62);
+}
+.masthead .meta {
+  text-align: right;
+  font-family: var(--fz-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(244, 238, 222, 0.5);
+  line-height: 1.7;
+}
+
+/* ---------------- Section frame ---------------- */
+.section {
+  margin-top: 40px;
+}
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.section-num {
+  font-family: var(--fz-mono);
+  font-size: 12px;
+  color: var(--coral);
+  letter-spacing: 0.1em;
+  border: 1px solid rgba(232, 85, 61, 0.5);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.section-title {
+  font-family: var(--fz-display);
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.section-sub {
+  font-size: 13px;
+  color: rgba(244, 238, 222, 0.55);
+  margin: 0;
+}
+
+/* ---------------- Paper card ---------------- */
+.paper {
+  background: linear-gradient(180deg, var(--cream), var(--cream-2));
+  color: var(--ink);
+  border-radius: 14px;
+  border: 1px solid var(--paper-line);
+  box-shadow: var(--shadow-card);
+  padding: 22px;
+}
+
+/* ---------------- Setup bar ---------------- */
+.setup {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.field input {
+  font-family: var(--fz-body);
+  font-size: 16px;
+  color: var(--ink);
+  background: #fffdf6;
+  border: 1px solid var(--paper-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  outline: none;
+}
+.field input:focus {
+  border-color: var(--pine-600);
+  box-shadow: 0 0 0 3px rgba(28, 77, 58, 0.12);
+}
+.setup-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ---------------- Buttons ---------------- */
+.btn {
+  font-family: var(--fz-body);
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 9px;
+  padding: 11px 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-primary {
+  background: var(--coral);
+  color: #fff;
+  box-shadow: 0 8px 18px -10px rgba(232, 85, 61, 0.9);
+}
+.btn-primary:hover {
+  background: var(--coral-deep);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--paper-line);
+}
+.btn-ghost:hover {
+  background: #fffdf6;
+}
+.btn-dark {
+  background: var(--pine-700);
+  color: var(--cream);
+  border-color: var(--pine-line);
+}
+.btn-dark:hover {
+  background: var(--pine-600);
+}
+
+/* ---------------- Hole selector ---------------- */
+.hole-strip {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 8px;
+}
+.hole-chip {
+  position: relative;
+  border: 1px solid var(--paper-line);
+  border-radius: 9px;
+  background: #fffdf6;
+  padding: 8px 4px 7px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.12s, transform 0.08s, background 0.12s;
+}
+.hole-chip:hover {
+  transform: translateY(-2px);
+}
+.hole-chip.active {
+  border-color: var(--coral);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(232, 85, 61, 0.35);
+}
+.hole-chip .h-no {
+  font-family: var(--fz-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+  letter-spacing: 0.05em;
+}
+.hole-chip .h-score {
+  font-family: var(--fz-display);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.hole-chip .h-par {
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+.hole-chip .h-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+/* ---------------- Hole editor ---------------- */
+.editor {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.editor .full {
+  grid-column: 1 / -1;
+}
+.edit-block {
+  border: 1px solid var(--paper-line);
+  border-radius: 11px;
+  padding: 14px 16px;
+  background: #fffdf7;
+}
+.edit-block h4 {
+  margin: 0 0 12px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.edit-block h4::before {
+  content: "";
+  width: 14px;
+  height: 2px;
+  background: var(--coral);
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.counter button {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  border: 1px solid var(--pine-600);
+  background: var(--pine-700);
+  color: var(--cream);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.counter button:hover {
+  background: var(--pine-600);
+}
+.counter .val {
+  font-family: var(--fz-display);
+  font-weight: 700;
+  font-size: 32px;
+  min-width: 46px;
+  text-align: center;
+  color: var(--ink);
+}
+.counter .cap {
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.counter-row {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.seg button {
+  font-family: var(--fz-body);
+  font-size: 13px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--paper-line);
+  background: #fff;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.seg button:hover {
+  border-color: var(--pine-600);
+}
+.seg button.on {
+  background: var(--pine-700);
+  border-color: var(--pine-700);
+  color: var(--cream);
+}
+.seg.coral button.on {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: #fff;
+}
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.field-row:last-child {
+  margin-bottom: 0;
+}
+.field-row .lbl {
+  font-size: 12px;
+  color: var(--ink-soft);
+  min-width: 88px;
+}
+.mini-input {
+  width: 84px;
+  font-family: var(--fz-mono);
+  font-size: 15px;
+  padding: 8px 10px;
+  border: 1px solid var(--paper-line);
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink);
+  outline: none;
+}
+.mini-input:focus {
+  border-color: var(--pine-600);
+}
+select.mini-select {
+  font-family: var(--fz-body);
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--paper-line);
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink);
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--coral);
+}
+
+.muted-note {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 4px 0 0;
+}
+
+/* ---------------- Scorecard table ---------------- */
+.scorecard {
+  overflow-x: auto;
+}
+table.sc {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--fz-mono);
+  font-size: 13px;
+  color: var(--ink);
+}
+table.sc th,
+table.sc td {
+  border: 1px solid var(--paper-line);
+  text-align: center;
+  padding: 7px 4px;
+  min-width: 34px;
+}
+table.sc th.row-h {
+  background: var(--pine-800);
+  color: var(--cream);
+  font-weight: 600;
+  text-align: left;
+  padding-left: 10px;
+  letter-spacing: 0.08em;
+  min-width: 70px;
+  position: sticky;
+  left: 0;
+}
+table.sc tr.par-row td {
+  background: rgba(28, 77, 58, 0.08);
+  color: var(--ink-soft);
+}
+table.sc td.tot {
+  background: var(--pine-800);
+  color: var(--cream);
+  font-weight: 700;
+}
+table.sc .topar-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--birdie);
+  color: var(--birdie);
+  font-weight: 700;
+}
+table.sc .topar-square {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--bogey);
+  color: var(--bogey);
+  font-weight: 700;
+}
+table.sc .topar-square.dbl {
+  border-color: var(--double);
+  color: var(--double);
+}
+
+/* ---------------- Big stat tiles ---------------- */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.tile {
+  border: 1px solid var(--pine-line);
+  border-radius: 13px;
+  padding: 18px;
+  background: linear-gradient(165deg, rgba(28, 77, 58, 0.35), rgba(10, 31, 22, 0.2));
+  backdrop-filter: blur(2px);
+}
+.tile .k {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 238, 222, 0.6);
+}
+.tile .v {
+  font-family: var(--fz-display);
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 8px;
+}
+.tile .v small {
+  font-size: 16px;
+  color: rgba(244, 238, 222, 0.6);
+  font-weight: 500;
+}
+.tile .sub {
+  font-family: var(--fz-mono);
+  font-size: 12px;
+  color: var(--coral);
+  margin-top: 6px;
+}
+
+/* ---------------- Chart + data grid ---------------- */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.panel {
+  border: 1px solid var(--pine-line);
+  border-radius: 13px;
+  padding: 18px 18px 10px;
+  background: rgba(10, 31, 22, 0.32);
+}
+.panel h3 {
+  font-family: var(--fz-display);
+  font-weight: 600;
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+.panel .ph-sub {
+  font-size: 12px;
+  color: rgba(244, 238, 222, 0.5);
+  margin: 0 0 14px;
+}
+
+/* stat rows (number + ratio) */
+.statrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--pine-line);
+}
+.statrow:last-child {
+  border-bottom: none;
+}
+.statrow .name {
+  font-size: 13.5px;
+  color: rgba(244, 238, 222, 0.85);
+}
+.statrow .name small {
+  display: block;
+  font-size: 11px;
+  color: rgba(244, 238, 222, 0.45);
+}
+.statrow .vals {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-family: var(--fz-mono);
+}
+.statrow .ratio {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cream);
+  min-width: 64px;
+  text-align: right;
+}
+.statrow .raw {
+  font-size: 12px;
+  color: rgba(244, 238, 222, 0.5);
+  min-width: 58px;
+  text-align: right;
+}
+
+.subhead {
+  grid-column: 1 / -1;
+  font-family: var(--fz-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--coral);
+  margin: 22px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.subhead::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--pine-line);
+}
+
+.privacy {
+  margin-top: 46px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(244, 238, 222, 0.45);
+  line-height: 1.7;
+}
+.privacy a {
+  color: rgba(244, 238, 222, 0.7);
+}
+
+.chart-wrap {
+  width: 100%;
+  height: 240px;
+}
+.recharts-default-tooltip {
+  border-radius: 8px !important;
+  border: 1px solid var(--paper-line) !important;
+}
+
+@media (max-width: 760px) {
+  .setup {
+    grid-template-columns: 1fr 1fr;
+  }
+  .setup-actions {
+    grid-column: 1 / -1;
+  }
+  .editor {
+    grid-template-columns: 1fr;
+  }
+  .tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .hole-strip {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
