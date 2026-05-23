@@ -16,51 +16,50 @@ import {
 import { rate } from "../lib/analyze.js";
 
 const C = {
-  birdie: "#cf3a2e",
-  par: "#2c7a52",
-  bogey: "#3f7fb0",
-  double: "#16233a",
-  coral: "#e8553d",
-  gold: "#d8a93a",
-  grid: "rgba(122,178,150,0.18)",
-  axis: "rgba(244,238,222,0.6)",
-  cream: "#f4eede",
+  green: "#1f7a4d",
+  greenDeep: "#14693f",
+  neutral: "#93a098",
+  amber: "#c9881d",
+  red: "#cf4636",
+  blue: "#3a6ea5",
+  grid: "rgba(21,32,26,0.08)",
+  axis: "#5d6b61",
 };
 
-const axisStyle = { fontSize: 11, fontFamily: "Spline Sans Mono, monospace", fill: C.axis };
+const axisStyle = { fontSize: 11, fontFamily: "inherit", fill: C.axis };
 
 function tip() {
   return {
     contentStyle: {
-      background: "#0e2a1f",
-      border: "1px solid rgba(122,178,150,0.3)",
-      borderRadius: 8,
-      color: C.cream,
-      fontFamily: "Spline Sans Mono, monospace",
+      background: "#ffffff",
+      border: "1px solid #e3e7e3",
+      borderRadius: 10,
+      color: "#15201a",
       fontSize: 12,
+      boxShadow: "0 8px 24px -16px rgba(20,40,28,0.5)",
     },
-    labelStyle: { color: C.cream },
-    cursor: { fill: "rgba(122,178,150,0.08)" },
+    labelStyle: { color: "#5d6b61" },
+    cursor: { fill: "rgba(31,122,77,0.06)" },
   };
 }
 
-// スコア構成 (イーグル以下 / バーディ / パー / ボギー / ダボ以上)
+// スコア構成 (green=good ... red=bad の直感的な配色)
 export function ScoreDistribution({ r }) {
   const data = [
-    { name: "Eagle-", v: r.underBirdieCount, c: C.birdie },
-    { name: "Birdie", v: r.birdieCount, c: C.coral },
-    { name: "Par", v: r.parCount, c: C.par },
-    { name: "Bogey", v: r.bogeyCount, c: C.bogey },
-    { name: "Dbl+", v: r.overBogeyCount, c: C.double },
+    { name: "Eagle-", v: r.underBirdieCount, c: C.greenDeep },
+    { name: "Birdie", v: r.birdieCount, c: C.green },
+    { name: "Par", v: r.parCount, c: C.neutral },
+    { name: "Bogey", v: r.bogeyCount, c: C.amber },
+    { name: "Dbl+", v: r.overBogeyCount, c: C.red },
   ];
   return (
     <div className="chart-wrap">
       <ResponsiveContainer>
-        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
+        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -22 }}>
           <XAxis dataKey="name" tick={axisStyle} axisLine={{ stroke: C.grid }} tickLine={false} />
           <YAxis allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} />
           <Tooltip {...tip()} formatter={(v) => [`${v} ホール`, "数"]} />
-          <Bar dataKey="v" radius={[5, 5, 0, 0]} maxBarSize={56}>
+          <Bar dataKey="v" radius={[6, 6, 0, 0]} maxBarSize={48}>
             {data.map((d, i) => (
               <Cell key={i} fill={d.c} />
             ))}
@@ -73,24 +72,17 @@ export function ScoreDistribution({ r }) {
 
 // ホール別 To par
 export function HoleByHole({ pars, holes }) {
-  const data = holes.map((h, i) => {
-    const d = (Number(h.stroke) || 0) - pars[i];
-    return { name: i + 1, d };
-  });
-  const colorFor = (d) => (d < 0 ? C.birdie : d === 0 ? C.par : d === 1 ? C.bogey : C.double);
+  const data = holes.map((h, i) => ({ name: i + 1, d: (Number(h.stroke) || 0) - pars[i] }));
+  const colorFor = (d) => (d < 0 ? C.green : d === 0 ? C.neutral : d === 1 ? C.amber : C.red);
   return (
     <div className="chart-wrap">
       <ResponsiveContainer>
-        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -22 }}>
+        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
           <XAxis dataKey="name" tick={axisStyle} axisLine={{ stroke: C.grid }} tickLine={false} interval={0} />
           <YAxis allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} />
           <ReferenceLine y={0} stroke={C.grid} />
-          <Tooltip
-            {...tip()}
-            formatter={(v) => [`${v > 0 ? "+" : ""}${v}`, "To par"]}
-            labelFormatter={(l) => `Hole ${l}`}
-          />
-          <Bar dataKey="d" radius={[3, 3, 0, 0]} maxBarSize={26}>
+          <Tooltip {...tip()} formatter={(v) => [`${v > 0 ? "+" : ""}${v}`, "To par"]} labelFormatter={(l) => `Hole ${l}`} />
+          <Bar dataKey="d" radius={[3, 3, 0, 0]} maxBarSize={22}>
             {data.map((d, i) => (
               <Cell key={i} fill={colorFor(d.d)} />
             ))}
@@ -104,15 +96,15 @@ export function HoleByHole({ pars, holes }) {
 // パット数/ホール
 export function PuttsPerHole({ holes }) {
   const data = holes.map((h, i) => ({ name: i + 1, putt: Number(h.putt) || 0 }));
-  const colorFor = (p) => (p <= 1 ? C.birdie : p === 2 ? C.par : C.bogey);
+  const colorFor = (p) => (p <= 1 ? C.green : p === 2 ? C.neutral : C.red);
   return (
     <div className="chart-wrap">
       <ResponsiveContainer>
-        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -22 }}>
+        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
           <XAxis dataKey="name" tick={axisStyle} axisLine={{ stroke: C.grid }} tickLine={false} interval={0} />
           <YAxis allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} />
           <Tooltip {...tip()} formatter={(v) => [`${v} putt`, ""]} labelFormatter={(l) => `Hole ${l}`} />
-          <Bar dataKey="putt" radius={[3, 3, 0, 0]} maxBarSize={26}>
+          <Bar dataKey="putt" radius={[3, 3, 0, 0]} maxBarSize={22}>
             {data.map((d, i) => (
               <Cell key={i} fill={colorFor(d.putt)} />
             ))}
@@ -123,24 +115,24 @@ export function PuttsPerHole({ holes }) {
   );
 }
 
-// 総合レーダー: 主要な率を 0-100 で
+// 総合レーダー
 export function SummaryRadar({ r }) {
   const data = [
     { k: "FWキープ", v: rate(r.teeShotFairwayCount, r.teeShotResultCount) },
     { k: "パーオン", v: rate(r.parOnCount, 18) },
     { k: "1パット", v: rate(r.puttNoMissCount, r.puttTryCount) },
-    { k: "バンカー\nセーブ", v: rate(r.bunkerParSaveCount, r.bunkerCount) },
-    { k: "バーディ\n成功", v: rate(r.birdieChanceHoleInCount, r.birdieChanceCount) },
-    { k: "2パット率", v: rate(r.puttInMiddleTwoPuttCount + r.puttInLongTwoPuttCount, r.puttInMiddleCount + r.puttInLongCount) },
+    { k: "バンカー", v: rate(r.bunkerParSaveCount, r.bunkerCount) },
+    { k: "バーディ", v: rate(r.birdieChanceHoleInCount, r.birdieChanceCount) },
+    { k: "2パット", v: rate(r.puttInMiddleTwoPuttCount + r.puttInLongTwoPuttCount, r.puttInMiddleCount + r.puttInLongCount) },
   ];
   return (
     <div className="chart-wrap">
       <ResponsiveContainer>
-        <RadarChart data={data} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+        <RadarChart data={data} margin={{ top: 12, right: 24, bottom: 12, left: 24 }}>
           <PolarGrid stroke={C.grid} />
-          <PolarAngleAxis dataKey="k" tick={{ ...axisStyle, fontFamily: "Zen Kaku Gothic New, sans-serif" }} />
+          <PolarAngleAxis dataKey="k" tick={{ ...axisStyle }} />
           <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-          <Radar dataKey="v" stroke={C.coral} fill={C.coral} fillOpacity={0.35} />
+          <Radar dataKey="v" stroke={C.green} fill={C.green} fillOpacity={0.28} />
           <Tooltip {...tip()} formatter={(v) => [`${v.toFixed(1)}%`, ""]} />
         </RadarChart>
       </ResponsiveContainer>
@@ -160,18 +152,11 @@ export function ParOnByDistance({ r }) {
   return (
     <div className="chart-wrap">
       <ResponsiveContainer>
-        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
+        <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -22 }}>
           <XAxis dataKey="name" tick={axisStyle} axisLine={{ stroke: C.grid }} tickLine={false} />
           <YAxis domain={[0, 100]} tick={axisStyle} axisLine={false} tickLine={false} unit="%" />
-          <Tooltip
-            {...tip()}
-            formatter={(v, _n, p) => [`${v.toFixed(1)}%  (${p.payload.on}/${p.payload.t})`, "パーオン率"]}
-          />
-          <Bar dataKey="pct" radius={[5, 5, 0, 0]} maxBarSize={48} fill={C.gold}>
-            {data.map((_, i) => (
-              <Cell key={i} fill={C.gold} />
-            ))}
-          </Bar>
+          <Tooltip {...tip()} formatter={(v, _n, p) => [`${v.toFixed(1)}%  (${p.payload.on}/${p.payload.t})`, "パーオン率"]} />
+          <Bar dataKey="pct" radius={[6, 6, 0, 0]} maxBarSize={44} fill={C.green} />
         </BarChart>
       </ResponsiveContainer>
     </div>
