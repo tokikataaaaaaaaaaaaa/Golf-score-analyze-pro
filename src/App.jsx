@@ -10,6 +10,7 @@ import HoleEditor from "./components/HoleEditor.jsx";
 import Scorecard from "./components/Scorecard.jsx";
 import AnalysisReport from "./components/AnalysisReport.jsx";
 import { Collapsible, Field } from "./components/ui.jsx";
+import { downloadShareImage } from "./lib/shareImage.js";
 
 const STORE_KEY = "fairway_round_v1";
 const today = () => new Date().toISOString().slice(0, 10);
@@ -51,6 +52,7 @@ export default function App() {
   const [holes, setHoles] = useState(init.holes);
   const [sel, setSel] = useState(0);
   const [tab, setTab] = useState("input");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     try {
@@ -97,6 +99,40 @@ export default function App() {
     setHoles(emptyRound(DEFAULT_PARS));
     setSel(0);
   };
+
+  const handleDownload = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await downloadShareImage({ courseName, player, date, pars, holes, result });
+    } catch (e) {
+      alert("画像の生成に失敗しました: " + (e?.message || e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveButton = (
+    <button className="btn primary save-btn" onClick={handleDownload} disabled={saving}>
+      {saving ? (
+        "画像を生成中…"
+      ) : (
+        <>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path
+              d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          結果を画像で保存
+        </>
+      )}
+    </button>
+  );
 
   return (
     <div className="app">
@@ -231,9 +267,19 @@ export default function App() {
           </>
         )}
 
-        {tab === "card" && <Scorecard pars={pars} holes={holes} result={result} />}
+        {tab === "card" && (
+          <>
+            {saveButton}
+            <Scorecard pars={pars} holes={holes} result={result} />
+          </>
+        )}
 
-        {tab === "analysis" && <AnalysisReport pars={pars} holes={holes} r={result} />}
+        {tab === "analysis" && (
+          <>
+            {saveButton}
+            <AnalysisReport pars={pars} holes={holes} r={result} />
+          </>
+        )}
 
         <p className="privacy2">
           データは端末内（localStorage）のみで処理され、サーバーには送信されません。
