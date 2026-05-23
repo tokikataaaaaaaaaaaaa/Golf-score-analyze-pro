@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { analyze } from "./lib/analyze.js";
 import {
   DEFAULT_PARS,
@@ -11,11 +11,12 @@ import Scorecard from "./components/Scorecard.jsx";
 import AnalysisReport from "./components/AnalysisReport.jsx";
 import { Collapsible, Field } from "./components/ui.jsx";
 import { downloadShareImage } from "./lib/shareImage.js";
+import { buildShareUrl, readSharedState } from "./lib/shareLink.js";
 
 const STORE_KEY = "fairway_round_v1";
 const today = () => new Date().toISOString().slice(0, 10);
 
-function loadInitial() {
+function loadStored() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) {
@@ -34,6 +35,12 @@ function loadInitial() {
   };
 }
 
+function boot() {
+  const shared = readSharedState();
+  if (shared) return { state: shared, shared: true };
+  return { state: loadStored(), shared: false };
+}
+
 const TABS = [
   { id: "input", label: "入力" },
   { id: "card", label: "スコアカード" },
@@ -43,18 +50,40 @@ const TABS = [
 const dotColor = (d) =>
   d < 0 ? "var(--red)" : d === 0 ? "var(--green)" : d === 1 ? "var(--amber)" : "var(--blue)";
 
+const DownloadIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const LinkIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path d="M10 13a5 5 0 0 0 7.07 0l2-2a5 5 0 0 0-7.07-7.07l-1 1M14 11a5 5 0 0 0-7.07 0l-2 2a5 5 0 0 0 7.07 7.07l1-1" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export default function App() {
-  const init = loadInitial();
-  const [courseName, setCourseName] = useState(init.courseName);
-  const [player, setPlayer] = useState(init.player);
-  const [date, setDate] = useState(init.date);
-  const [pars, setPars] = useState(init.pars);
-  const [holes, setHoles] = useState(init.holes);
+  const [{ state: initState, shared: initShared }] = useState(boot);
+
+  const [courseName, setCourseName] = useState(initState.courseName);
+  const [player, setPlayer] = useState(initState.player);
+  const [date, setDate] = useState(initState.date);
+  const [pars, setPars] = useState(initState.pars);
+  const [holes, setHoles] = useState(initState.holes);
   const [sel, setSel] = useState(0);
-  const [tab, setTab] = useState("input");
+  const [tab, setTab] = useState(initShared ? "analysis" : "input");
   const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(initShared);
+
+  const firstRun = useRef(true);
+  const sharedRef = useRef(initShared);
 
   useEffect(() => {
+    if (firstRun.current) {
+      firstRun.current = false;
+      // 共有リンクで開いた場合、最初の描画では訪問者のローカル保存を上書きしない。
+      if (sharedRef.current) return;
+    }
     try {
       localStorage.setItem(
         STORE_KEY,
@@ -62,6 +91,16 @@ export default function App() {
       );
     } catch {
       /* storage may be unavailable; ignore */
+    }
+    // 編集が入った時点で「共有表示中」を解除し、URLのハッシュを外す。
+    if (sharedRef.current) {
+      sharedRef.current = false;
+      setShared(false);
+      try {
+        history.replaceState(null, "", location.origin + location.pathname + location.search);
+      } catch {
+        /* ignore */
+      }
     }
   }, [courseName, player, date, pars, holes]);
 
@@ -112,26 +151,40 @@ export default function App() {
     }
   };
 
-  const saveButton = (
-    <button className="btn primary save-btn" onClick={handleDownload} disabled={saving}>
-      {saving ? (
-        "画像を生成中…"
-      ) : (
-        <>
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path
-              d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          結果を画像で保存
-        </>
-      )}
-    </button>
+  const copyShareLink = async () => {
+    const url = buildShareUrl({ courseName, player, date, pars, holes });
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      window.prompt("以下のURLをコピーして共有してください", url);
+    }
+  };
+
+  const actions = (
+    <div className="share-actions">
+      <button className="btn ghost" onClick={copyShareLink}>
+        {copied ? (
+          "コピーしました ✓"
+        ) : (
+          <>
+            <LinkIcon />
+            リンクをコピー
+          </>
+        )}
+      </button>
+      <button className="btn primary" onClick={handleDownload} disabled={saving}>
+        {saving ? (
+          "生成中…"
+        ) : (
+          <>
+            <DownloadIcon />
+            画像で保存
+          </>
+        )}
+      </button>
+    </div>
   );
 
   return (
@@ -165,9 +218,18 @@ export default function App() {
       </header>
 
       <main className="view">
+        {shared && (
+          <div className="share-banner">
+            <span className="sb-icon" aria-hidden="true">🔗</span>
+            <span>
+              共有されたラウンドを表示しています。編集を始めると、あなたの端末のデータとして保存されます。
+            </span>
+          </div>
+        )}
+
         {tab === "input" && (
           <>
-            <Collapsible title="ラウンド設定">
+            <Collapsible title="ラウンド設定" defaultOpen={shared}>
               <Field label="コース名">
                 <input
                   className="input"
@@ -269,20 +331,20 @@ export default function App() {
 
         {tab === "card" && (
           <>
-            {saveButton}
+            {actions}
             <Scorecard pars={pars} holes={holes} result={result} />
           </>
         )}
 
         {tab === "analysis" && (
           <>
-            {saveButton}
+            {actions}
             <AnalysisReport pars={pars} holes={holes} r={result} />
           </>
         )}
 
         <p className="privacy2">
-          データは端末内（localStorage）のみで処理され、サーバーには送信されません。
+          データは端末内（localStorage）のみで処理され、サーバーには送信されません。共有リンクはラウンドのデータをURL自体に埋め込みます。
         </p>
       </main>
     </div>
