@@ -13,8 +13,10 @@ const RESULT_PARON = [
   { value: "onGreen", label: "オン" },
   { value: "right", label: "右" },
   { value: "short", label: "ショート" },
+  { value: "layup", label: "レイアップ" },
 ];
 const PUTT_REMAINED = [
+  { value: "m1", label: "1m以内" },
   { value: "pin", label: "1pin以内" },
   { value: "short", label: "5m以内" },
   { value: "middle", label: "10m以内" },
