@@ -341,35 +341,46 @@ button {
   padding-right: 38px;
 }
 
-/* par editor grid */
-.par-grid {
+/* par editor (one-tap 3/4/5 per hole) */
+.par-editor {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  gap: 8px;
   margin-top: 12px;
 }
-.par-cell {
-  text-align: center;
+.par-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.par-cell span {
-  display: block;
-  font-size: 10px;
-  color: var(--faint);
-  margin-bottom: 2px;
+.par-row-label {
+  flex: 0 0 auto;
+  width: 38px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
 }
-.par-cell input {
-  width: 100%;
-  min-height: 38px;
-  text-align: center;
-  font-size: 15px;
+.par-seg {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+.par-opt {
+  flex: 1;
+  min-height: 42px;
+  border-radius: 10px;
   border: 1px solid var(--border-strong);
-  border-radius: 9px;
   background: var(--surface);
-  color: var(--ink);
-  outline: none;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
-.par-cell input:focus {
+.par-opt.on {
+  background: var(--green);
   border-color: var(--green);
+  color: #fff;
 }
 
 /* ---------------- Hole strip ---------------- */
