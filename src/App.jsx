@@ -9,11 +9,13 @@ import {
 import HoleEditor from "./components/HoleEditor.jsx";
 import Scorecard from "./components/Scorecard.jsx";
 import AnalysisReport from "./components/AnalysisReport.jsx";
-import { Collapsible, Field } from "./components/ui.jsx";
+import { Collapsible, Field, Card } from "./components/ui.jsx";
 import { downloadShareImage } from "./lib/shareImage.js";
 import { buildShareUrl, readSharedState } from "./lib/shareLink.js";
+import { requestAdvice } from "./lib/aiAdvice.js";
 
 const STORE_KEY = "fairway_round_v1";
+const KEY_STORE = "fairway_anthropic_key";
 const today = () => new Date().toISOString().slice(0, 10);
 
 function loadStored() {
@@ -61,6 +63,28 @@ const LinkIcon = () => (
   </svg>
 );
 
+function AdviceBody({ text }) {
+  return (
+    <div className="advice-body">
+      {text.split(/\n/).map((line, i) => {
+        const t = line.trim();
+        if (!t) return null;
+        const head = t.match(/^【([^】]+)】\s*(.*)$/);
+        if (head) {
+          return (
+            <div key={i}>
+              <h4 className="advice-h">{head[1]}</h4>
+              {head[2] && <p className="advice-p">{head[2]}</p>}
+            </div>
+          );
+        }
+        if (/^[・･\-*]/.test(t)) return <p key={i} className="advice-li">{t.replace(/^[\-*]\s*/, "・")}</p>;
+        return <p key={i} className="advice-p">{t}</p>;
+      })}
+    </div>
+  );
+}
+
 export default function App() {
   const [{ state: initState, shared: initShared }] = useState(boot);
 
@@ -75,8 +99,34 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(initShared);
 
+  const [apiKey, setApiKey] = useState(() => {
+    try {
+      return localStorage.getItem(KEY_STORE) || "";
+    } catch {
+      return "";
+    }
+  });
+  const [keyDraft, setKeyDraft] = useState("");
+  const [showKeyEdit, setShowKeyEdit] = useState(false);
+  const [advice, setAdvice] = useState(initState.advice || null);
+  const [adviceShared, setAdviceShared] = useState(initShared && !!initState.advice);
+  const [adviceLoading, setAdviceLoading] = useState(false);
+  const [adviceError, setAdviceError] = useState("");
+
   const firstRun = useRef(true);
   const sharedRef = useRef(initShared);
+
+  // ラウンドのスコアを編集したら、古いAIアドバイスは破棄する。
+  const adviceFirstRun = useRef(true);
+  useEffect(() => {
+    if (adviceFirstRun.current) {
+      adviceFirstRun.current = false;
+      return;
+    }
+    setAdvice(null);
+    setAdviceShared(false);
+    setAdviceError("");
+  }, [pars, holes]);
 
   useEffect(() => {
     if (firstRun.current) {
@@ -141,7 +191,7 @@ export default function App() {
   };
 
   const copyShareLink = async () => {
-    const url = buildShareUrl({ courseName, player, date, pars, holes });
+    const url = buildShareUrl({ courseName, player, date, pars, holes, advice });
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -150,6 +200,115 @@ export default function App() {
       window.prompt("以下のURLをコピーして共有してください", url);
     }
   };
+
+  const saveKey = () => {
+    const k = keyDraft.trim();
+    if (!k) return;
+    try {
+      localStorage.setItem(KEY_STORE, k);
+    } catch {
+      /* ignore */
+    }
+    setApiKey(k);
+    setKeyDraft("");
+    setShowKeyEdit(false);
+  };
+
+  const clearKey = () => {
+    try {
+      localStorage.removeItem(KEY_STORE);
+    } catch {
+      /* ignore */
+    }
+    setApiKey("");
+    setShowKeyEdit(false);
+  };
+
+  const generateAdvice = async () => {
+    if (!apiKey || adviceLoading) return;
+    setAdviceLoading(true);
+    setAdviceError("");
+    try {
+      const text = await requestAdvice({
+        apiKey,
+        result,
+        pars,
+        holes,
+        meta: { courseName, player, date, coursePar },
+      });
+      setAdvice(text);
+      setAdviceShared(false);
+    } catch (e) {
+      setAdviceError(e?.message || String(e));
+    } finally {
+      setAdviceLoading(false);
+    }
+  };
+
+  const aiCard = (
+    <div className="ai-card">
+      <Card title="AIコーチのアドバイス" sub="この分析データをもとにAIが助言します">
+        {advice ? (
+          <>
+            {adviceShared && <div className="advice-note">共有者が生成したアドバイス</div>}
+            <AdviceBody text={advice} />
+            {adviceError && <div className="advice-error">{adviceError}</div>}
+            {apiKey && (
+              <button className="btn ghost advice-regen" onClick={generateAdvice} disabled={adviceLoading}>
+                {adviceLoading ? "生成中…" : "もう一度生成する"}
+              </button>
+            )}
+          </>
+        ) : adviceLoading ? (
+          <div className="advice-loading">AIが分析中です…（10〜20秒ほどかかります）</div>
+        ) : !apiKey || showKeyEdit ? (
+          <div className="advice-keysetup">
+            <p className="advice-desc">
+              Anthropic の API キーを入力すると、上の分析をもとにアドバイスを生成します。
+            </p>
+            <input
+              className="input"
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="sk-ant-..."
+              value={keyDraft}
+              onChange={(e) => setKeyDraft(e.target.value)}
+            />
+            <div className="advice-actions">
+              <button className="btn primary" onClick={saveKey} disabled={!keyDraft.trim()}>
+                キーを保存
+              </button>
+              {apiKey && (
+                <button className="btn ghost" onClick={() => setShowKeyEdit(false)}>
+                  キャンセル
+                </button>
+              )}
+              {apiKey && (
+                <button className="btn ghost danger" onClick={clearKey}>
+                  削除
+                </button>
+              )}
+            </div>
+            <p className="advice-privacy">
+              キーはこの端末（localStorage）にのみ保存され、Anthropic 以外には送信されません。共有リンクにも含まれません。
+            </p>
+            {adviceError && <div className="advice-error">{adviceError}</div>}
+          </div>
+        ) : (
+          <div className="advice-cta">
+            <button className="btn primary" onClick={generateAdvice}>
+              この分析でアドバイスをもらう
+            </button>
+            <button className="btn ghost" onClick={() => setShowKeyEdit(true)}>
+              APIキーを変更
+            </button>
+            {adviceError && <div className="advice-error">{adviceError}</div>}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
 
   const actions = (
     <div className="share-actions">
@@ -331,6 +490,7 @@ export default function App() {
         {tab === "analysis" && (
           <>
             {actions}
+            {aiCard}
             <AnalysisReport pars={pars} holes={holes} r={result} />
           </>
         )}
