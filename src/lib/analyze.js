@@ -13,8 +13,8 @@
 //   teeShotResult: string|null,left | fw | right        (par4/5 のみ)
 //   parOnShotDistance: string, パーオンを狙ったショットの残距離(ヤード, 数字文字列)
 //   parOnShotClub: string|null,
-//   parOnShotResult: string|null, over | left | onGreen | right | short
-//   puttRemained: string|null, pin(2.5m/1pin以内) | short(5m以内) | middle(10m以内) | long(10m以上)
+//   parOnShotResult: string|null, over | left | onGreen | right | short | layup(レイアップ=パーオン分析から除外)
+//   puttRemained: string|null, m1(1m以内) | pin(2.5m/1pin以内) | short(5m以内) | middle(10m以内) | long(10m以上)
 //   puttMissed: string|null,   left | nomiss(ワンパット=カップイン) | right
 //   puttDistance: string|null, short | nomiss(半径1m以内) | long
 //   guardBunker: boolean,      グリーンサイドバンカーに入れたか
@@ -71,6 +71,9 @@ export function analyze(course, holes) {
 
   // --- パット ---
   let puttOverThreePutt = 0;
+
+  let puttInM1Count = 0,
+    puttInM1MissCount = 0;
 
   let puttInAPinCount = 0,
     puttInAPinCupInCount = 0,
@@ -149,12 +152,13 @@ export function analyze(course, holes) {
     const putt = num(h.putt);
     const parThree = par === 3;
     const parOn = stroke - putt <= par - 2;
+    const isLayup = h.parOnShotResult === "layup"; // レイアップはパーオンショット分析から除外
 
     teeShotResult.push(h.teeShotResult || "");
     puttMissed.push(h.puttMissed || "");
     puttDistance.push(h.puttDistance || "");
     parOnShotResult.push(h.parOnShotResult || "");
-    parOnShotClub.push(h.parOnShotClub || "");
+    parOnShotClub.push(isLayup ? "" : h.parOnShotClub || "");
     teeShotClub.push(h.teeShotClub || "");
 
     obCount += num(h.ob);
@@ -208,6 +212,10 @@ export function analyze(course, holes) {
     // パット
     if (putt >= 3) puttOverThreePutt += 1;
 
+    if (h.puttRemained === "m1") {
+      puttInM1Count += 1;
+      if (h.puttMissed === "left" || h.puttMissed === "right") puttInM1MissCount += 1;
+    }
     if (h.puttRemained === "pin") {
       puttInAPinCount += 1;
       if (h.puttMissed === "nomiss") puttInAPinCupInCount += 1;
@@ -243,8 +251,8 @@ export function analyze(course, holes) {
 
     if (parOn) parOnCount += 1;
 
-    // パーオン距離別
-    if (h.parOnShotDistance != null && String(h.parOnShotDistance).length > 0) {
+    // パーオン距離別 (レイアップは除外)
+    if (!isLayup && h.parOnShotDistance != null && String(h.parOnShotDistance).length > 0) {
       const d = num(h.parOnShotDistance);
       if (d < 50) {
         parOnUnder50Count += 1;
@@ -268,8 +276,8 @@ export function analyze(course, holes) {
       }
     }
 
-    // パーオン(クラブ別): パーオン成功時のみカウント。par3はティーショットのクラブで数える。
-    if (parOn) {
+    // パーオン(クラブ別): パーオン成功時のみカウント。par3はティーショットのクラブで数える。レイアップは除外。
+    if (parOn && !isLayup) {
       if (h.parOnShotClub === "wood") parOnWoodCount += 1;
       if (h.parOnShotClub === "ut") parOnUtCount += 1;
       if (h.parOnShotClub === "longiron") parOnLongIronCount += 1;
@@ -296,9 +304,9 @@ export function analyze(course, holes) {
       if (stroke <= par) bunkerParSaveCount += 1;
     }
 
-    // バーディチャンス: パーオン かつ 初打残5m以内(pin/short)
+    // バーディチャンス: パーオン かつ 初打残5m以内(m1/pin/short)
     if (stroke - putt <= par - 2) {
-      if (h.puttRemained === "pin" || h.puttRemained === "short") {
+      if (h.puttRemained === "m1" || h.puttRemained === "pin" || h.puttRemained === "short") {
         birdieChanceCount += 1;
         if (stroke < par) birdieChanceHoleInCount += 1;
       }
@@ -333,7 +341,7 @@ export function analyze(course, holes) {
   const puttDistanceLongCount = puttDistance.filter((p) => p === "long").length;
 
   const parOnShotResultCount = parOnShotResult.filter(
-    (s) => s.length > 0 && s !== "onGreen"
+    (s) => s.length > 0 && s !== "onGreen" && s !== "layup"
   ).length;
   const parOnShotResultGreenOnCount = parOnShotResult.filter((s) => s === "onGreen").length;
   const parOnShotResultGreenOverCount = parOnShotResult.filter((s) => s === "over").length;
@@ -423,6 +431,8 @@ export function analyze(course, holes) {
     parOnWedgeTryCount,
     // パット
     puttOverThreePutt,
+    puttInM1Count,
+    puttInM1MissCount,
     puttTryCount,
     puttNoMissCount,
     puttLeftCount,
