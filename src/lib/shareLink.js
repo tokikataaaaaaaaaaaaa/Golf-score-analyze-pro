@@ -38,7 +38,7 @@ function b64urlDecode(s) {
   return new TextDecoder().decode(bytes);
 }
 
-export function encodeState({ courseName, player, date, pars, holes }) {
+export function encodeState({ courseName, player, date, pars, holes, advice }) {
   const h = holes.map((hole, idx) => {
     const def = emptyHole(pars[idx]);
     const diff = {};
@@ -55,6 +55,7 @@ export function encodeState({ courseName, player, date, pars, holes }) {
     r: pars,
     h,
   };
+  if (advice && typeof advice === "string") payload.g = advice;
   return b64urlEncode(JSON.stringify(payload));
 }
 
@@ -100,6 +101,7 @@ export function decodeState(code) {
       date: typeof payload.d === "string" ? payload.d : "",
       pars,
       holes,
+      advice: typeof payload.g === "string" ? payload.g : null,
     };
   } catch {
     return null;
