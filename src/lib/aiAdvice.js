@@ -24,6 +24,7 @@ export function buildDataBlock({ result: r, pars, holes, meta }) {
   L.push(`距離別パーオン率: 〜50y ${pct(r.parOnUnder50OnGreenCount, r.parOnUnder50Count)}, 〜100y ${pct(r.parOnUnder100OnGreenCount, r.parOnUnder100Count)}, 〜150y ${pct(r.parOnUnder150OnGreenCount, r.parOnUnder150Count)}, 〜200y ${pct(r.parOnUnder200OnGreenCount, r.parOnUnder200Count)}, 200y〜 ${pct(r.parOnOver200OnGreenCount, r.parOnOver200Count)}`);
   L.push(`グリーンを外した方向: オーバー ${r.parOnShotResultGreenOverCount}, ショート ${r.parOnShotResultGreenShortCount}, 左 ${r.parOnShotResultGreenLeftCount}, 右 ${r.parOnShotResultGreenRightCount}`);
   L.push(`パット: 合計 ${r.totalPutt}（${(r.totalPutt / 18).toFixed(1)}/H）, 3パット ${r.puttOverThreePutt}回, 方向ノーミス率 ${pct(r.puttNoMissCount, r.puttTryCount)}, ショート傾向 ${pct(r.puttDistanceShortCount, r.puttDistanceCount)}, オーバー傾向 ${pct(r.puttDistanceLongCount, r.puttDistanceCount)}, 左外し ${r.puttLeftCount}, 右外し ${r.puttRightCount}`);
+  L.push(`1m以内パット: ${r.puttInM1Count}回中 ${r.puttInM1MissCount}回ミス`);
   L.push(`アプローチ/バンカー: アプローチパーセーブ ${r.approachParSaveCount}回, チップイン ${r.approachChipInCount}, バンカーセーブ率 ${pct(r.bunkerParSaveCount, r.bunkerCount)}（${r.bunkerParSaveCount}/${r.bunkerCount}）`);
   L.push(`バーディチャンス(5m以内): ${r.birdieChanceCount}回中 ${r.birdieChanceHoleInCount}回成功`);
   L.push(`ミス: OB ${r.obCount}, 池 ${r.hazardCount}, ペナルティ ${r.penaltyCount}, 100yd以内でグリーンを外し ${r.missedGreenInRegulationUnder100}`);
