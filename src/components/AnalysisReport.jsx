@@ -139,6 +139,7 @@ export default function AnalysisReport({ pars, holes, r }) {
       <Collapsible title="ミス分析">
         {N("100yd以内でグリーンを外した", r.missedGreenInRegulationUnder100)}
         {N("3パット以上", r.puttOverThreePutt)}
+        {N("1m以内のパットを外した", r.puttInM1MissCount, `${r.puttInM1Count}回中`)}
         {N("グリーン周りバンカー", r.bunkerCount)}
         {N("OB", r.obCount)}
         {N("池", r.hazardCount)}
