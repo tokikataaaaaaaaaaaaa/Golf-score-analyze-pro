@@ -115,19 +115,8 @@ export default function App() {
   const updateHole = (i, next) =>
     setHoles((hs) => hs.map((h, idx) => (idx === i ? next : h)));
 
-  const setPar = (i, v) => {
-    const p = Math.max(3, Math.min(6, Number(v) || 3));
-    setPars((ps) => ps.map((x, idx) => (idx === i ? p : x)));
-  };
-
-  const loadSample = () => {
-    setCourseName("サンプルカントリークラブ");
-    setPlayer("ゲスト");
-    setDate(today());
-    setPars(SAMPLE_PARS);
-    setHoles(SAMPLE_ROUND);
-    setSel(0);
-  };
+  const setPar = (i, v) =>
+    setPars((ps) => ps.map((x, idx) => (idx === i ? v : x)));
 
   const resetRound = () => {
     if (!confirm("入力をすべてクリアして新しいラウンドを開始しますか？")) return;
@@ -258,17 +247,23 @@ export default function App() {
                 <span className="field2-label">
                   各ホールのパー（合計 {coursePar}）
                 </span>
-                <div className="par-grid">
+                <div className="par-editor">
                   {pars.map((p, i) => (
-                    <div className="par-cell" key={i}>
-                      <span>H{i + 1}</span>
-                      <input
-                        type="number"
-                        min={3}
-                        max={6}
-                        value={p}
-                        onChange={(e) => setPar(i, e.target.value)}
-                      />
+                    <div className="par-row" key={i}>
+                      <span className="par-row-label">H{i + 1}</span>
+                      <div className="par-seg">
+                        {[3, 4, 5].map((v) => (
+                          <button
+                            type="button"
+                            key={v}
+                            className={`par-opt${p === v ? " on" : ""}`}
+                            aria-pressed={p === v}
+                            onClick={() => setPar(i, v)}
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -276,11 +271,8 @@ export default function App() {
             </Collapsible>
 
             <div className="quickbar">
-              <button className="btn ghost" onClick={loadSample}>
-                サンプル読込
-              </button>
               <button className="btn ghost danger" onClick={resetRound}>
-                リセット
+                すべてリセット
               </button>
             </div>
 
