@@ -140,6 +140,98 @@ export function SummaryRadar({ r }) {
   );
 }
 
+// 中央を的にした「外し方向」ターゲット図 (グリーン/カップ共通)
+// dirs: { top, bottom, left, right } 各 { label, count, pct }
+// center: { value, label, sub }, shape: "green" | "cup"
+function MissTarget({ center, dirs, shape, empty }) {
+  if (empty) {
+    return <div className="miss-target miss-empty">データがありません</div>;
+  }
+  const pcts = Object.values(dirs).map((d) => d.pct);
+  const peak = Math.max(...pcts);
+  const denom = Math.max(peak, 1);
+  const tint = (p) => `rgba(207, 70, 54, ${(0.08 + 0.5 * (p / denom)).toFixed(3)})`;
+  const Cell = ({ d, pos }) =>
+    d ? (
+      <div
+        className={`mt-cell mt-${pos}${peak > 0 && d.pct === peak ? " mt-peak" : ""}`}
+        style={{ background: tint(d.pct) }}
+      >
+        <span className="mt-dir">{d.label}</span>
+        <span className="mt-pct">{d.pct.toFixed(0)}%</span>
+        <span className="mt-n">{d.count} 回</span>
+      </div>
+    ) : (
+      <div className="mt-cell mt-empty-cell" />
+    );
+  return (
+    <div className="miss-target">
+      <div className="mt-grid">
+        <Cell pos="corner" />
+        <Cell d={dirs.top} pos="top" />
+        <Cell pos="corner" />
+        <Cell d={dirs.left} pos="left" />
+        <div className={`mt-center mt-${shape}`}>
+          <span className="mt-c-val">{center.value}</span>
+          <span className="mt-c-label">{center.label}</span>
+          {center.sub && <span className="mt-c-sub">{center.sub}</span>}
+        </div>
+        <Cell d={dirs.right} pos="right" />
+        <Cell pos="corner" />
+        <Cell d={dirs.bottom} pos="bottom" />
+        <Cell pos="corner" />
+      </div>
+    </div>
+  );
+}
+
+// パーオンショットの方向: グリーンを中心に オーバー/ショート/左右 の外し割合
+export function GreenDispersion({ r }) {
+  const on = r.parOnShotResultGreenOnCount;
+  const over = r.parOnShotResultGreenOverCount;
+  const short = r.parOnShotResultGreenShortCount;
+  const left = r.parOnShotResultGreenLeftCount;
+  const right = r.parOnShotResultGreenRightCount;
+  const total = on + over + short + left + right;
+  const p = (n) => rate(n, total);
+  return (
+    <MissTarget
+      empty={total === 0}
+      shape="green"
+      center={{ value: `${p(on).toFixed(0)}%`, label: "オン", sub: `${on} / ${total}` }}
+      dirs={{
+        top: { label: "オーバー（奥）", count: over, pct: p(over) },
+        bottom: { label: "ショート（手前）", count: short, pct: p(short) },
+        left: { label: "左", count: left, pct: p(left) },
+        right: { label: "右", count: right, pct: p(right) },
+      }}
+    />
+  );
+}
+
+// パットのミス傾向: カップを中心に 左右(方向)/手前・奥(距離感) の外し割合
+export function PuttMissMap({ r }) {
+  const dirTry = r.puttTryCount;
+  const distTry = r.puttDistanceCount;
+  return (
+    <MissTarget
+      empty={dirTry === 0 && distTry === 0}
+      shape="cup"
+      center={{
+        value: `${rate(r.puttNoMissCount, dirTry).toFixed(0)}%`,
+        label: "カップイン",
+        sub: `${r.puttNoMissCount} / ${dirTry}`,
+      }}
+      dirs={{
+        top: { label: "オーバー（奥）", count: r.puttDistanceLongCount, pct: rate(r.puttDistanceLongCount, distTry) },
+        bottom: { label: "ショート（手前）", count: r.puttDistanceShortCount, pct: rate(r.puttDistanceShortCount, distTry) },
+        left: { label: "左", count: r.puttLeftCount, pct: rate(r.puttLeftCount, dirTry) },
+        right: { label: "右", count: r.puttRightCount, pct: rate(r.puttRightCount, dirTry) },
+      }}
+    />
+  );
+}
+
 // パーオン距離別の達成率
 export function ParOnByDistance({ r }) {
   const data = [

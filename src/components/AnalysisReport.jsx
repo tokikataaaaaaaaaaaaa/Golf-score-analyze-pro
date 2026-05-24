@@ -6,6 +6,8 @@ import {
   PuttsPerHole,
   SummaryRadar,
   ParOnByDistance,
+  GreenDispersion,
+  PuttMissMap,
 } from "./Charts.jsx";
 
 // 「数」と「率」を持つ行
@@ -50,8 +52,14 @@ export default function AnalysisReport({ pars, holes, r }) {
       <Card title="パット数の推移" sub="ホールごとのパット数">
         <PuttsPerHole holes={holes} />
       </Card>
+      <Card title="パット ミスの傾向" sub="カップを中心に外した方向　横=方向 / 縦=距離感">
+        <PuttMissMap r={r} />
+      </Card>
       <Card title="パーオン距離別" sub="残距離レンジごとの達成率">
         <ParOnByDistance r={r} />
+      </Card>
+      <Card title="パーオンショットの方向" sub="グリーンを中心に外した方向の割合">
+        <GreenDispersion r={r} />
       </Card>
 
       {/* 詳細（既定で折りたたみ） */}

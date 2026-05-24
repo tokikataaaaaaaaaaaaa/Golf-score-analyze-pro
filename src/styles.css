@@ -735,6 +735,96 @@ button {
   border: 1px solid var(--border) !important;
 }
 
+/* ---------------- Miss target (green / cup) ---------------- */
+.miss-target {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 2px;
+}
+.miss-empty {
+  color: var(--faint);
+  font-size: 13px;
+  padding: 32px 0;
+}
+.mt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 340px;
+}
+.mt-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.mt-empty-cell {
+  border: none;
+  background: transparent;
+}
+.mt-peak {
+  border-color: var(--red);
+  box-shadow: 0 0 0 1px var(--red) inset;
+}
+.mt-dir {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  text-align: center;
+  line-height: 1.15;
+}
+.mt-pct {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mt-n {
+  font-size: 10px;
+  color: var(--faint);
+}
+.mt-center {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  color: #fff;
+}
+.mt-green {
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #2f9d65, var(--green) 62%, var(--green-600));
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.18), var(--shadow);
+}
+.mt-cup {
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #2a3a30 0 26%, var(--green) 30%, var(--green-600));
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.16), var(--shadow);
+}
+.mt-c-val {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.mt-c-label {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.92;
+}
+.mt-c-sub {
+  font-size: 10px;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------------- Scorecard table ---------------- */
 .sc-wrap {
   display: grid;
